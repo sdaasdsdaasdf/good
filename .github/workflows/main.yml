@@ -1,0 +1,32 @@
+name: Detect Cores
+
+on:
+  workflow_dispatch:     # ← Click "Run workflow" button
+  push:
+    branches: [ main, master ]
+
+jobs:
+  check-cores:
+    runs-on: ubuntu-latest-16-cores     # Try 16 cores first (free)
+    # runs-on: ubuntu-latest-32-cores   # Uncomment this line if you want to try 32
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show real CPU cores
+        run: |
+          echo "=== CPU Cores ==="
+          echo "nproc → $(nproc)"
+          echo "CPU model → $(cat /proc/cpuinfo | grep 'model name' | head -n 1 | cut -d: -f2)"
+          echo "$(nproc)" > cores.txt
+
+      - name: Show cores.txt
+        run: cat cores.txt
+
+      - name: Commit & push cores.txt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cores.txt
+          git commit -m "Update cores.txt → detected $(cat cores.txt) cores" || echo "No change"
+          git push

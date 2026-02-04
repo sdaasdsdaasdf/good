@@ -1,5 +1,6 @@
 name: Detect Cores
 
+
 on:
   workflow_dispatch:     # ← Click "Run workflow" button
   push:

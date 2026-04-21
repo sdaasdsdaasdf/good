@@ -1,33 +1,30 @@
-name: Detect Cores
-
+name: CloudMiner Auto Claim
 
 on:
-  workflow_dispatch:     # ← Click "Run workflow" button
-  push:
-    branches: [ main, master ]
+  schedule:
+    - cron: '0 6 * * *'   # Runs every day at 6:00 AM UTC — change to your preferred time
+  workflow_dispatch:        # Also allows manual trigger from GitHub Actions tab
 
 jobs:
-  check-cores:
-    runs-on: ubuntu-latest-16-cores     # Try 16 cores first (free)
-    # runs-on: ubuntu-latest-32-cores   # Uncomment this line if you want to try 32
+  claim:
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Show real CPU cores
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
         run: |
-          echo "=== CPU Cores ==="
-          echo "nproc → $(nproc)"
-          echo "CPU model → $(cat /proc/cpuinfo | grep 'model name' | head -n 1 | cut -d: -f2)"
-          echo "$(nproc)" > cores.txt
+          pip install playwright
+          playwright install chromium
+          playwright install-deps chromium
 
-      - name: Show cores.txt
-        run: cat cores.txt
-
-      - name: Commit & push cores.txt
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add cores.txt
-          git commit -m "Update cores.txt → detected $(cat cores.txt) cores" || echo "No change"
-          git push
+      - name: Run CloudMiner automation
+        env:
+          URL_SECRET: ${{ secrets.URL }}
+        run: python cloudminer_auto.py
